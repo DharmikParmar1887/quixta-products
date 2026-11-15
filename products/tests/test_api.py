@@ -1,36 +1,24 @@
-from datetime import date
-
+import pytest
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from products.models import Product
+from products.tests.factories import ProductFactory
 
 
-def make_product(sku, category="lighting", **extra):
-    values = {
-        "sku": sku,
-        "name": f"Product {sku}",
-        "category": category,
-        "price_paise": 100000,
-        "stock": 1,
-        "updated_at": date(2026, 5, 1),
-    }
-    values.update(extra)
-    return Product.objects.create(**values)
-
-
+@pytest.mark.django_db
 class ProductListTests(APITestCase):
     url = reverse("product-list")
 
     def setUp(self):
         for sku in ["LMP-003", "LMP-001", "LMP-002"]:
-            make_product(sku, "lighting")
+            ProductFactory(sku=sku, category="lighting")
         for sku in ["STL-002", "STL-001"]:
-            make_product(sku, "seating")
+            ProductFactory(sku=sku, category="seating")
         for sku in ["SHF-001", "SHF-002"]:
-            make_product(sku, "storage")
+            ProductFactory(sku=sku, category="storage")
 
     def test_pages_of_five_ordered_by_sku(self):
         response = self.client.get(self.url)
@@ -67,9 +55,10 @@ class ProductListTests(APITestCase):
         self.assertEqual({p["category"] for p in body["results"]}, {"seating"})
 
 
+@pytest.mark.django_db
 class ProductDetailTests(APITestCase):
     def test_returns_one_product(self):
-        make_product("LMP-001")
+        ProductFactory(sku="LMP-001")
         response = self.client.get(reverse("product-detail", args=["LMP-001"]))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["sku"], "LMP-001")
@@ -79,6 +68,7 @@ class ProductDetailTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
+@pytest.mark.django_db
 class ProductCreateTests(APITestCase):
     url = reverse("product-list")
     valid = {"sku": "LMP-010", "name": "Reading lamp", "category": "lighting", "price_paise": 450000, "stock": 3}
@@ -111,7 +101,7 @@ class ProductCreateTests(APITestCase):
         self.assertFalse(Product.objects.exists())
 
     def test_duplicate_sku_is_400_with_sku_key(self):
-        make_product("LMP-010")
+        ProductFactory(sku="LMP-010")
         for sku in ["LMP-010", "lmp-010"]:
             with self.subTest(sku=sku):
                 response = self.post(sku=sku)

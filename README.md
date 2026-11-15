@@ -81,9 +81,16 @@ curl -X POST http://127.0.0.1:8000/api/products/ \
 
 ## Run the tests
 
+Tests run with pytest and pytest-django, with coverage, the same tools as data-lake-service. Load `.env` first to run them against PostgreSQL; without it they use SQLite.
+
 ```bash
-python manage.py test
+set -a; source .env; set +a
+pytest                       # all tests
+pytest products/tests/test_api.py -k create   # one file, matching tests only
+./unit-tests.sh              # coverage run -m pytest, then coverage report -m
 ```
+
+`python manage.py test` still works too. Test data for the API tests comes from `ProductFactory` in `products/tests/factories.py` (factory-boy).
 
 ## How it's organised
 

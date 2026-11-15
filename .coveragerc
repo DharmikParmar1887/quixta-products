@@ -1,0 +1,14 @@
+[run]
+source = .
+branch = False
+
+[report]
+show_missing = True
+include = products/*
+          config/*
+omit = products/migrations/*
+       products/tests/*
+       config/wsgi.py
+
+[html]
+title = Code Coverage

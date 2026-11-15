@@ -4,6 +4,7 @@ import tempfile
 from io import StringIO
 from pathlib import Path
 
+import pytest
 from django.conf import settings
 from django.core.management import CommandError, call_command
 from django.test import TestCase
@@ -13,6 +14,7 @@ from products.models import Product
 PRODUCTS_CSV = settings.BASE_DIR / "products.csv"
 
 
+@pytest.mark.django_db
 class CleanProductsCommandTests(TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()

@@ -9,3 +9,5 @@ rejects.csv
 .idea/
 .vscode/
 .env
+.coverage
+htmlcov/
