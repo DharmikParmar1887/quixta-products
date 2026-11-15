@@ -8,3 +8,4 @@ rejects.csv
 .DS_Store
 .idea/
 .vscode/
+.env

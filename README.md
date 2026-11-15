@@ -1,18 +1,50 @@
 # Product list cleaner and API
 
-Cleans a supplier's product CSV, loads it into SQLite, and serves it through a small Django REST framework API.
+Cleans a supplier's product CSV, loads it into PostgreSQL, and serves it through a small Django REST framework API.
 
 - **Python:** 3.12 or newer
-- **Stack:** Django 5.2, Django REST framework 3.15+, SQLite
+- **Stack:** Django 5.2, Django REST framework 3.15+, PostgreSQL 17 (psycopg 3)
 - **Time spent:** _TODO: fill in your actual time_
 
 ## Setup
+
+### 1. Create the database
+
+With PostgreSQL running locally (for example `brew install postgresql@17 && brew services start postgresql@17`):
+
+```bash
+psql postgres -c "CREATE ROLE quixta_user WITH LOGIN CREATEDB PASSWORD 'your-password';"
+psql postgres -c "CREATE DATABASE quixta_products OWNER quixta_user;"
+```
+
+`CREATEDB` is needed because `manage.py test` creates and drops a temporary test database.
+
+### 2. Configure the connection
+
+The database is read from `POSTGRES_*` environment variables:
+
+```bash
+cp .env.example .env               # then set POSTGRES_PASSWORD in .env
+set -a; source .env; set +a        # load it into the current shell
+```
+
+| Variable | Default |
+|---|---|
+| `POSTGRES_NAME` | none (required for PostgreSQL) |
+| `POSTGRES_USER` | none |
+| `POSTGRES_PASSWORD` | none |
+| `POSTGRES_HOST` | `localhost` |
+| `POSTGRES_PORT` | `5432` |
+
+If `POSTGRES_NAME` is not set, the project falls back to a local SQLite file (`db.sqlite3`), so it still runs without PostgreSQL.
+
+### 3. Install and create the tables
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python manage.py migrate
+python manage.py migrate           # creates the products_product table
 ```
 
 ## Clean and load the CSV
