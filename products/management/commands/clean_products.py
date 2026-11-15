@@ -8,6 +8,8 @@ from django.db import transaction
 from products.cleaning import clean_rows, read_rows
 from products.models import Product
 
+UPSERT_FIELDS = ["name", "category", "price_paise", "stock", "updated_at"]
+
 
 class Command(BaseCommand):
     help = "Clean a supplier products CSV, load the valid rows and write rejects.csv."
@@ -44,18 +46,24 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def save(self, products):
-        # Upsert by sku, so running the command again on the same file changes nothing.
-        for product in products:
-            Product.objects.update_or_create(
-                sku=product.sku,
-                defaults={
-                    "name": product.name,
-                    "category": product.category,
-                    "price_paise": product.price_paise,
-                    "stock": product.stock,
-                    "updated_at": product.updated_at,
-                },
-            )
+        # One bulk upsert by sku (INSERT ... ON CONFLICT (sku) DO UPDATE) instead of
+        # a SELECT plus INSERT/UPDATE per row. Running the same file again changes nothing.
+        Product.objects.bulk_create(
+            [
+                Product(
+                    sku=product.sku,
+                    name=product.name,
+                    category=product.category,
+                    price_paise=product.price_paise,
+                    stock=product.stock,
+                    updated_at=product.updated_at,
+                )
+                for product in products
+            ],
+            update_conflicts=True,
+            unique_fields=["sku"],
+            update_fields=UPSERT_FIELDS,
+        )
 
     def write_rejects(self, path, rejects):
         with path.open("w", newline="", encoding="utf-8") as fh:

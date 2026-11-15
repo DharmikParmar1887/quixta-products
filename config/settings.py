@@ -32,7 +32,7 @@ TEMPLATES = [
     }
 ]
 
-# PostgreSQL, configured from POSTGRES_* env vars (same names as data-lake-service).
+# PostgreSQL, configured from POSTGRES_* env vars.
 # If POSTGRES_NAME is not set, fall back to a local SQLite file so the project still runs.
 if os.environ.get("POSTGRES_NAME"):
     DATABASES = {

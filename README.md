@@ -4,7 +4,7 @@ Cleans a supplier's product CSV, loads it into PostgreSQL, and serves it through
 
 - **Python:** 3.12 or newer
 - **Stack:** Django 5.2, Django REST framework 3.15+, PostgreSQL 17 (psycopg 3)
-- **Time spent:** _TODO: fill in your actual time_
+- **Time spent:** about 3.5 hours
 
 ## Setup
 
@@ -23,9 +23,20 @@ psql postgres -c "CREATE DATABASE quixta_products OWNER quixta_user;"
 
 The database is read from `POSTGRES_*` environment variables:
 
+Create a `.env` file in the project folder (it is git-ignored):
+
 ```bash
-cp .env.example .env               # then set POSTGRES_PASSWORD in .env
-set -a; source .env; set +a        # load it into the current shell
+POSTGRES_NAME=quixta_products
+POSTGRES_USER=quixta_user
+POSTGRES_PASSWORD=your-password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+```
+
+Then load it into the current shell:
+
+```bash
+set -a; source .env; set +a
 ```
 
 | Variable | Default |
@@ -81,7 +92,7 @@ curl -X POST http://127.0.0.1:8000/api/products/ \
 
 ## Run the tests
 
-Tests run with pytest and pytest-django, with coverage, the same tools as data-lake-service. Load `.env` first to run them against PostgreSQL; without it they use SQLite.
+Tests run with pytest and pytest-django, with coverage. Load `.env` first to run them against PostgreSQL; without it they use SQLite.
 
 ```bash
 set -a; source .env; set +a
@@ -101,7 +112,9 @@ products/
   serializers.py       # API validation, reuses the functions in cleaning.py
   views.py, urls.py    # list/create and detail endpoints
   management/commands/clean_products.py   # file in, DB + rejects.csv + summary out
-  tests/               # cleaning, command and API tests
+  tests/               # cleaning, command and API tests (pytest, factory-boy)
+config/settings.py     # database from POSTGRES_* env vars
+docs/LLD.md            # low-level design
 ```
 
 ## Decisions and assumptions
@@ -109,7 +122,7 @@ products/
 - **One set of rules.** `cleaning.py` holds every rule. The command and the serializer both call it, so the API can't drift from the import.
 - **Rejects.** Columns are checked in the brief's order and the first failure gives the reason. Line numbers come from the CSV reader's position, so they stay correct if a quoted value spans lines or the file has blank lines (blank lines are skipped).
 - **Duplicates.** Among valid rows for a sku, the latest `updated_at` wins. On a tie, the row lower in the file wins.
-- **Safe to re-run.** The command upserts by sku inside one transaction (`update_or_create`), and `updated_at` comes from the file, not `auto_now`. A second run writes the same values. It doesn't delete products that aren't in the file, such as ones created through the API.
+- **Safe to re-run.** The command upserts every valid row by sku in one query (`bulk_create` with `update_conflicts`, which is `INSERT ... ON CONFLICT (sku) DO UPDATE` on PostgreSQL) inside one transaction, and `updated_at` comes from the file, not `auto_now`. A second run writes the same values. It doesn't delete products that aren't in the file, such as ones created through the API.
 - **Price.** Parsed with `Decimal`, not float, so `14,999.50` becomes exactly `1499950`. More than 2 decimal places is rejected rather than rounded.
 - **Dates.** The shape is checked with a regex before `date.fromisoformat`, because on Python 3.11+ `fromisoformat` also accepts forms like `20260502`.
 - **API input.** The API takes `price_paise` (already in paise), so it must be a whole number above 0. `sku`, `name` and `category` are cleaned the same way as in the CSV (` lmp-010 ` becomes `LMP-010`), and the unique check runs on the cleaned sku. `stock` defaults to 0, `updated_at` to today (Asia/Kolkata).
@@ -119,6 +132,7 @@ products/
 
 ## AI tools
 
-- **Tools used:** Claude (Anthropic).
-- **For which parts:** _TODO: describe honestly, e.g. "Claude generated the first version of the cleaning module, command, API and tests from the brief. I then reviewed and ran everything, and changed ..."_
-- **One thing I changed or threw away:** _TODO: something you actually changed after reviewing._
+- **Tools used:** Claude.
+- **For which parts:** I worked in this order: first a low-level design of the modules (`docs/LLD.md`) with Claude, which I reviewed; then the code, which I checked line by line; then the tests. Claude also helped set up PostgreSQL and pytest.
+- **What I changed after reviewing:**
+  - **Query optimization.** The import first saved products with `update_or_create`, which runs a SELECT and then an INSERT or UPDATE for every row. I replaced it with one bulk upsert (`bulk_create(update_conflicts=True, unique_fields=["sku"])`), so the whole file is saved in a single query. A test checks there is exactly one INSERT.

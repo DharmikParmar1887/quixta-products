@@ -7,9 +7,12 @@ from pathlib import Path
 import pytest
 from django.conf import settings
 from django.core.management import CommandError, call_command
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 
 from products.models import Product
+from products.tests.factories import ProductFactory
 
 PRODUCTS_CSV = settings.BASE_DIR / "products.csv"
 
@@ -90,6 +93,21 @@ class CleanProductsCommandTests(TestCase):
         self.assertEqual(first_summary, second_summary)
         self.assertEqual(Product.objects.count(), 10)
         self.assertEqual(first, second)
+
+    def test_existing_product_is_updated_and_others_are_kept(self):
+        ProductFactory(sku="LMP-001", name="Old name", price_paise=1)
+        ProductFactory(sku="API-001")
+        self.run_command()
+        lamp = Product.objects.get(sku="LMP-001")
+        self.assertEqual((lamp.name, lamp.price_paise), ("Maple lamp", 820000))
+        self.assertTrue(Product.objects.filter(sku="API-001").exists())
+        self.assertEqual(Product.objects.count(), 11)
+
+    def test_all_rows_are_saved_in_one_insert_query(self):
+        with CaptureQueriesContext(connection) as ctx:
+            self.run_command()
+        inserts = [q["sql"] for q in ctx.captured_queries if q["sql"].lstrip().upper().startswith("INSERT")]
+        self.assertEqual(len(inserts), 1)
 
     def test_missing_file_is_a_clear_error(self):
         with self.assertRaises(CommandError):
