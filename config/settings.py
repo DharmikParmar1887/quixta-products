@@ -11,9 +11,20 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "django.contrib.staticfiles",
     "rest_framework",
+    "drf_yasg",
     "products",
 ]
+
+STATIC_URL = "static/"
+
+# Swagger UI at /api/swagger/. No authentication, so no login button.
+SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
+    "SECURITY_DEFINITIONS": None,
+}
+SWAGGER_USE_COMPAT_RENDERERS = False
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

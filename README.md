@@ -84,6 +84,8 @@ python manage.py runserver
 | GET | `/api/products/<sku>/` | One product, or 404 |
 | POST | `/api/products/` | Create. 201 on success, 400 with a key per failing field |
 
+**Swagger UI:** open http://127.0.0.1:8000/api/swagger/ to see every endpoint and call it from the browser (choose an endpoint, then **Try it out** and **Execute**). The raw schema is at `/api/swagger/?format=openapi`.
+
 ```bash
 curl -X POST http://127.0.0.1:8000/api/products/ \
   -H "Content-Type: application/json" \

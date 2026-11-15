@@ -117,3 +117,16 @@ class ProductCreateTests(APITestCase):
         response = self.client.post(self.url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(set(response.json()), {"sku", "name", "category", "price_paise"})
+
+
+class SwaggerTests(APITestCase):
+    def test_swagger_ui_loads(self):
+        response = self.client.get(reverse("schema-swagger-ui"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_schema_lists_product_endpoints(self):
+        schema = self.client.get(reverse("schema-swagger-ui"), {"format": "openapi"}).json()
+        self.assertIn("/products/", schema["paths"])
+        self.assertIn("/products/{sku}/", schema["paths"])
+        list_params = {p["name"] for p in schema["paths"]["/products/"]["get"]["parameters"]}
+        self.assertIn("category", list_params)
