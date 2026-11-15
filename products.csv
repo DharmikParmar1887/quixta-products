@@ -1,0 +1,23 @@
+sku,name,category,price,stock,updated_at
+LMP-001,Maple lamp,lighting,8000,12,2026-05-02
+lmp-002,  Birch   desk lamp ,Lighting,"₹6,500",4,2026-05-03
+LMP-003,Brass floor lamp,lighting,"14,999.50",2,2026-05-03
+ STL-001,Cedar stool,seating,12000,7,2026-05-01
+STL-002,Oak bar stool,SEATING ,9800.00,,2026-05-04
+STL-003,Pine footstool,seating,free,3,2026-05-04
+CHR-001,Walnut chair,seating,18500,-2,2026-05-05
+CHR-002,,seating,15000,5,2026-05-05
+SHF-001,Linden shelf,storage,18000,9,2026-05-06
+SHF-002,Ash wall shelf,storage,7200,3.5,2026-05-06
+SHF-003,Elm bookcase,storage,0,1,2026-05-07
+BOX-01,Cane basket,storage,1500,20,2026-05-07
+BOX-002,Cane basket,storage,1500,20,2026-05-08
+BOX-003,Felt bin,decor,900,15,2026-05-08
+LMP-001,Maple lamp,lighting,8200,10,2026-05-09
+STL-001,Cedar stool,seating,11500,6,2026-04-28
+RUG-001,Jute rug,storage,"4,200",8,2026-13-01
+SHF-001,Linden shelf,storage,18500,8,2026-05-06
+LMP-004,Paper lantern,lighting," 2,400 ",30,2026-05-10
+STL-004,Teak stool,seating,"₹10,250.75",0,2026-05-10
+CAB-001,Rattan cabinet,storage,22000,abc,2026-05-11
+CAB-002,Rattan cabinet tall,storage,26000,2,2026-05-11
